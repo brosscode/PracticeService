@@ -10,10 +10,16 @@ import android.hardware.SensorManager
 import android.os.Binder
 import android.os.IBinder
 import android.text.format.DateUtils
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.sandbox.serviceproject.MainActivity
 import com.sandbox.serviceproject.R
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -26,9 +32,9 @@ class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
     private var resumeTimeStampMS = 0L
     private var totalPausedTimeMS = 0L
 
-    override var onMotionDetected: ((String) -> Unit)? = null
+    override var onMotionDetected: ((Long) -> Unit)? = null
     override var onCountdown: (() -> Unit)? = null
-    override var onTimeChanged: ((String) -> Unit)? = null
+    override var onTimeChanged: ((Long) -> Unit)? = null
 
     inner class MotionServiceBinder : Binder() {
         fun getService(): MotionService = this@MotionService
@@ -38,17 +44,17 @@ class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
     private var accelerometer: Sensor? = null
     private val accelerometerListener = AccelerometerListener(
         onMovementDetected = {
-            onMotionDetected?.invoke(elapsedTimeToString(getCurrentTime()))
+            onMotionDetected?.invoke(getCurrentTime())
             end()
         },
         onNoMovement = {
-            onTimeChanged?.invoke(elapsedTimeToString(getCurrentTime()))
+            onTimeChanged?.invoke(getCurrentTime())
             updateNotificationChannel()
         },
     )
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        android.util.Log.d("Service Project", "Starting Service")
+        Log.d("Service Project", "Starting Service")
         startForeground(CHANNEL_ID, buildNotification())
         return super.onStartCommand(intent, flags, startId)
     }
@@ -126,13 +132,11 @@ class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
         totalCountdownTimeMS = 0L
     }
 
-    private fun buildNotification(currentTime: String = "") =
+    private fun buildNotification(currentTime: Long = 0) =
         NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_android_black_24dp)
             .setContentTitle(getString(R.string.channel_name))
-            .setContentText(
-                currentTime.takeIf { it.isNotEmpty() } ?: getString(R.string.channel_description)
-            )
+            .setContentText(getString(R.string.channel_description))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(
                 PendingIntent.getActivity(
@@ -147,12 +151,8 @@ class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
     private fun updateNotificationChannel() =
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(
             CHANNEL_ID,
-            buildNotification(elapsedTimeToString(getCurrentTime()))
+            buildNotification(getCurrentTime())
         )
-
-    private fun elapsedTimeToString(timeSinceStart: Long): String {
-        return DateUtils.formatElapsedTime(timeSinceStart)
-    }
 
     private fun getCurrentTime(): Long = if (pausedTimeStampMS == 0L) {
         (System.currentTimeMillis() - (initialStartTimeStampMS + totalCountdownTimeMS)) / 1000L
@@ -161,7 +161,7 @@ class MotionService : Service(), MotionServiceActions, MotionServiceEvents {
 
     companion object {
         // Tolerance for ignored movement
-        const val TOLERANCE = 0.1f
+        const val TOLERANCE = .25f
         const val GRAVITY = 9.8f
 
         // Delay for start countdown

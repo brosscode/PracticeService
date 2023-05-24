@@ -26,27 +26,27 @@ class AccelerometerListener(
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     override fun onFlushCompleted(sensor: Sensor?) {}
-}
 
-class GyroScopeListener(
-    var isHandlingEvents: Boolean = false,
-    val onMovementDetected: () -> Unit,
-    val onNoMovement: () -> Unit,
-) : SensorEventListener2 {
-    override fun onSensorChanged(event: SensorEvent?) {
-        if (isHandlingEvents) {
-            val currentEventValues = event?.values
-            if (currentEventValues != null) {
-                when {
-                    currentEventValues[0] > MotionService.TOLERANCE -> onMovementDetected()
-                    currentEventValues[1] > MotionService.TOLERANCE -> onMovementDetected()
-                    currentEventValues[2] > MotionService.TOLERANCE + MotionService.GRAVITY -> onMovementDetected()
-                    else -> onNoMovement()
+    class GyroScopeListener(
+        var isHandlingEvents: Boolean = false,
+        val onMovementDetected: () -> Unit,
+        val onNoMovement: () -> Unit,
+    ) : SensorEventListener2 {
+        override fun onSensorChanged(event: SensorEvent?) {
+            if (isHandlingEvents) {
+                val currentEventValues = event?.values
+                if (currentEventValues != null) {
+                    when {
+                        currentEventValues[0] > MotionService.TOLERANCE -> onMovementDetected()
+                        currentEventValues[1] > MotionService.TOLERANCE -> onMovementDetected()
+                        currentEventValues[2] > MotionService.TOLERANCE + MotionService.GRAVITY -> onMovementDetected()
+                        else -> onNoMovement()
+                    }
                 }
             }
         }
-    }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    override fun onFlushCompleted(sensor: Sensor?) {}
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        override fun onFlushCompleted(sensor: Sensor?) {}
+    }
 }
