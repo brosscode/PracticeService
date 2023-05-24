@@ -10,6 +10,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 
 private val DarkColorScheme = darkColorScheme(
@@ -51,3 +52,13 @@ fun ServiceProjectTheme(
         content = content
     )
 }
+
+val MaterialTheme.dimens: Dimens
+    @Composable
+    get() = Dimens(
+        Grid(
+            4.dp, 8.dp, 12.dp, 16.dp, 20.dp, 24.dp, 28.dp, 32.dp, 36.dp, 40.dp, 44.dp, 48.dp,
+            52.dp, 56.dp, 60.dp, 64.dp, 68.dp, 72.dp, 76.dp, 80.dp, 84.dp, 88.dp, 92.dp, 96.dp
+        ),
+        StaticGrid(),
+    )

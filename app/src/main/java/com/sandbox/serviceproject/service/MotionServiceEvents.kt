@@ -1,9 +1,9 @@
 package com.sandbox.serviceproject.service
 
 interface MotionServiceEvents {
-    var onMotionDetected: ((String) -> Unit)?
+    var onMotionDetected: ((Long) -> Unit)?
     var onCountdown: (() -> Unit)?
-    var onTimeChanged: ((String) -> Unit)?
+    var onTimeChanged: ((Long) -> Unit)?
 }
 
 interface MotionServiceActions {

@@ -14,7 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import com.sandbox.serviceproject.service.MotionService
 import com.sandbox.serviceproject.service.MotionService.MotionServiceBinder
-import com.sandbox.serviceproject.ui.composables.MotionGameScreen
+import com.sandbox.serviceproject.ui.composables.LoadedGameScreen
+import com.sandbox.serviceproject.ui.composables.ScoreScreen
 import com.sandbox.serviceproject.ui.theme.ServiceProjectTheme
 import com.sandbox.serviceproject.viewmodel.MotionButtonStates
 import com.sandbox.serviceproject.viewmodel.MotionViewModel
@@ -33,12 +34,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             ServiceProjectTheme {
                 val motionState by viewModel.state.collectAsState()
-                MotionGameScreen(
-                    viewModelState = motionState,
-                    onButtonClicked = {
-                        handleButtonClickEvent(viewModel.state.value.buttonState)
-                    },
-                )
+                when (motionState) {
+                    is MotionViewModel.MotionState.Idle -> LoadedGameScreen(
+                        state = motionState as MotionViewModel.MotionState.Idle,
+                        onButtonClicked = { handleButtonClickEvent((motionState as MotionViewModel.MotionState.Idle).buttonState) },
+                        onScoreBoardClicked = { viewModel.scoreBoardPressed() },
+                    )
+
+                    is MotionViewModel.MotionState.ScoreBoard -> ScoreScreen(motionState as MotionViewModel.MotionState.ScoreBoard) { viewModel.scoreBoardBackPressed() }
+                }
             }
         }
     }
@@ -101,10 +105,12 @@ class MainActivity : ComponentActivity() {
             viewModel.startMotionGame()
             motionService?.start()
         }
+
         MotionButtonStates.PAUSE -> {
             viewModel.pauseMotionGame()
             motionService?.pause()
         }
+
         MotionButtonStates.RESUME -> {
             viewModel.startMotionGame()
             motionService?.resume()
